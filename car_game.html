@@ -1,0 +1,90 @@
+<html>
+  <head>
+    <script src="p5.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      
+      var canvasWidth = 300;                        
+      var canvasHeight = 600;
+
+      var playerWidth = 50; 
+      var playerSpeed = 10; 
+
+      var blockWidth = 75;  
+      var blockHeight = 100;  
+      var blockSpeed = 5; 
+
+      var isCollide = 0;
+      var score = 0;
+
+      function setup() {            
+        createCanvas(canvasWidth, canvasHeight);         
+        player1 = new Objects(10*int(random((canvasWidth-playerWidth)/10)),(canvasHeight - playerWidth - 10),playerWidth,playerWidth);  
+        block = new Objects(random(canvasWidth-blockWidth),0,blockWidth,blockHeight);  
+
+      }
+
+      function draw() {             
+        background(100);    
+         
+        player1.display(); 
+        block.display(); 
+        block.move(0,blockSpeed); 
+
+        //Check if there is collision
+        isCollide = collisionDetection(player1,block);
+        if (isCollide == 1){
+        print("crash ")
+        block.randomlyCreateAgain();
+        }
+
+        //Check if a new block is required
+        if (block.y > canvasHeight){
+          score++;
+          print("Score:"+score);
+          block.randomlyCreateAgain();
+        }
+
+        if (keyIsDown(LEFT_ARROW)){
+          player1.move(-playerSpeed,0);
+        }
+        if (keyIsDown(RIGHT_ARROW)){
+          player1.move(playerSpeed,0);
+        }
+
+      }
+
+
+      function Objects(x,y,width,height){
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        print("Object created at X="+this.x+" location");
+
+        this.move = function(x,y){
+          if (0 <= (this.x +x) && (this.x +x) <= (canvasWidth - this.width))
+            this.x += x;
+          this.y += y;
+
+        }
+        this.display = function(){
+          rect(this.x, this.y, this.width, this.height);
+        }
+        this.randomlyCreateAgain = function(){
+          this.x = random(canvasWidth-blockWidth);
+          this.y = 0;
+          this.display();
+        }
+      }
+
+      function collisionDetection(obj1,obj2){
+        if ((obj1.y < obj2.y + obj2.height) && (obj1.y + obj1.height) > obj2.y)
+          if ((obj1.x > obj2.x) && (obj1.x < obj2.x + obj2.width) || ((obj1.x + obj1.width) > obj2.x) && ((obj1.x + obj1.width)<(obj2.x + obj2.width)))
+            return 1;
+      }
+
+    </script>
+  </body>
+</html>
