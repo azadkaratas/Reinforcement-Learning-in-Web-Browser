@@ -5,7 +5,7 @@
   <body>
     <script type="text/javascript">
       
-      var canvasWidth = 300;                        
+      var canvasWidth = 450;                        
       var canvasHeight = 600;
 
       var playerWidth = 50; 
@@ -15,35 +15,45 @@
       var blockHeight = 100;  
       var blockSpeed = 5; 
 
-      var isCollide = 0;
-      var score = 0;
+      var isCollide1 = 0, isCollide2 = 0;
+      var score = 0; 
 
-      function setup() {            
+      function setup() {
         createCanvas(canvasWidth, canvasHeight);         
         player1 = new Objects(10*int(random((canvasWidth-playerWidth)/10)),(canvasHeight - playerWidth - 10),playerWidth,playerWidth);  
-        block = new Objects(random(canvasWidth-blockWidth),0,blockWidth,blockHeight);  
+        block1 = new Objects(random(canvasWidth-blockWidth),0,blockWidth,blockHeight); 
+        if ((block1.x - 2*blockWidth) > 0)
+          var xCandidate = random(0,(block1.x - 2*blockWidth));
+        else
+          var xCandidate = random((block1.x + blockWidth),canvasWidth-blockWidth);
+
+        block2 = new Objects(xCandidate,0,blockWidth,blockHeight);  
 
       }
 
       function draw() {             
         background(100);    
-         
         player1.display(); 
-        block.display(); 
-        block.move(0,blockSpeed); 
+        block1.display(); 
+        block1.move(0,blockSpeed); 
+        block2.display(); 
+        block2.move(0,blockSpeed); 
 
         //Check if there is collision
-        isCollide = collisionDetection(player1,block);
-        if (isCollide == 1){
-        print("crash ")
-        block.randomlyCreateAgain();
+        isCollide1 = collisionDetection(player1,block1);
+        isCollide2 = collisionDetection(player1,block2);
+        if (isCollide1 || isCollide2){
+          print("crash ")
+          block1.randomlyCreateAgain(1);
+          block2.randomlyCreateAgain(2);
         }
 
-        //Check if a new block is required
-        if (block.y > canvasHeight){
+        //Check if scored
+        if (block1.y > canvasHeight){
           score++;
           print("Score:"+score);
-          block.randomlyCreateAgain();
+          block1.randomlyCreateAgain(1);
+          block2.randomlyCreateAgain(2);
         }
 
         if (keyIsDown(LEFT_ARROW)){
@@ -64,25 +74,35 @@
         print("Object created at X="+this.x+" location");
 
         this.move = function(x,y){
-          if (0 <= (this.x +x) && (this.x +x) <= (canvasWidth - this.width))
+          if (0 <= (this.x +x) && (this.x +x) <= (canvasWidth - this.width)){
             this.x += x;
-          this.y += y;
-
+            this.y += y;
+          }
         }
+
         this.display = function(){
           rect(this.x, this.y, this.width, this.height);
         }
-        this.randomlyCreateAgain = function(){
-          this.x = random(canvasWidth-blockWidth);
-          this.y = 0;
-          this.display();
-        }
+
+        this.randomlyCreateAgain = function(blockNumber){ 
+          if(blockNumber==1)
+            this.x = random(canvasWidth-blockWidth);
+          else{
+            if ((block1.x - 2*blockWidth) > 0)
+              this.x  = random(0,(block1.x - 2*blockWidth));
+            else
+              this.x  = random((block1.x + blockWidth),canvasWidth-blockWidth);
+          }
+          this.y = 0;  
+        }        
       }
 
       function collisionDetection(obj1,obj2){
         if ((obj1.y < obj2.y + obj2.height) && (obj1.y + obj1.height) > obj2.y)
           if ((obj1.x > obj2.x) && (obj1.x < obj2.x + obj2.width) || ((obj1.x + obj1.width) > obj2.x) && ((obj1.x + obj1.width)<(obj2.x + obj2.width)))
             return 1;
+
+        return 0;
       }
 
     </script>
