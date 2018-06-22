@@ -1,10 +1,12 @@
 <html>
-  <head>
+  <head>  
+    <title>RL Car Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.2"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"> </script> 
     <script src="p5.js"></script>
   </head>
-  <body>
-    <script type="text/javascript">
-      
+
+<script type="text/javascript">
       var canvasWidth = 450;                        
       var canvasHeight = 600;
 
@@ -19,7 +21,13 @@
       var score = 0; 
 
       function setup() {
-        createCanvas(canvasWidth, canvasHeight);         
+        //initialization of HTML
+        document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
+
+
+        createCanvas(canvasWidth, canvasHeight);     
+        div = document.getElementById("canvasDiv");
+        div.appendChild(canvas);    
         player1 = new Objects(10*int(random((canvasWidth-playerWidth)/10)),(canvasHeight - playerWidth - 10),playerWidth,playerWidth);  
         block1 = new Objects(random(canvasWidth-blockWidth),0,blockWidth,blockHeight); 
         if ((block1.x - 2*blockWidth) > 0)
@@ -28,11 +36,10 @@
           var xCandidate = random((block1.x + blockWidth),canvasWidth-blockWidth);
 
         block2 = new Objects(xCandidate,0,blockWidth,blockHeight);  
-
       }
 
       function draw() {             
-        background(100);    
+        background(232,142,59);    
         player1.display(); 
         block1.display(); 
         block1.move(0,blockSpeed); 
@@ -52,6 +59,7 @@
         if (block1.y > canvasHeight){
           score++;
           print("Score:"+score);
+          document.getElementById("scoreID").innerHTML =score;
           block1.randomlyCreateAgain(1);
           block2.randomlyCreateAgain(2);
         }
@@ -64,7 +72,6 @@
         }
 
       }
-
 
       function Objects(x,y,width,height){
         this.x = x;
@@ -106,5 +113,43 @@
       }
 
     </script>
+
+
+    
+  <body style="background: #006dffab;">
+
+    <div id="header" style="padding:20px;text-align: center"> 
+      <h1>Reinforcement Learning Plays Car Game</h1>
+      <font style="font-size: 20px;">Score: </font><b><font id="scoreID" style="font-size:25px; color: #00ff5b;">0</font></b>
+    </div>
+
+    <div id="main" style="text-align: center; justify-content: center; display: flex;">
+      <div id="canvasDiv" style="margin-right: 50px; float:left"></div>
+      <div id="buttonArea" style="width: 300px;float:left"> 
+        <font style="font-size: 20px;">Current Block Speed: </font><font id="blockSpeedFont" style="font-size: 20px;">0</font>
+        <input type="button" id="increaseSpeed" value="Increase Speed" style=" font-size: 15px;margin: 5px;padding: 5px;"><input type="button" id="decreaseSpeed" value="Decrease Speed" style=" font-size: 15px;margin: 5px;padding: 5px;">
+        <br> <br>
+        <input type="button" id="trainButton" value="Self Train" style=" font-size: 25px;margin: 5px;padding: 5px;"><input type="button" id="testButton" value="Test & Play" style=" font-size: 25px;margin: 5px;padding: 5px;">
+      </div>
+    </div>
+
   </body>
+
+
+<script type="text/javascript">
+
+      document.getElementById("increaseSpeed").onclick = function(){
+        if (blockSpeed + 2 < 20)
+          blockSpeed += 2;
+        document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
+      }
+      document.getElementById("decreaseSpeed").onclick = function(){
+        if (blockSpeed - 2 > 0)
+          blockSpeed -= 2; 
+        document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
+      }
+
+
+</script>
+
 </html>
