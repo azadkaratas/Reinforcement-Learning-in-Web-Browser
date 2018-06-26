@@ -18,25 +18,29 @@
       var blockSpeed = 5; 
 
       var isCollide1 = 0, isCollide2 = 0;
-      var score = 0; 
+      var score = 0, turn = 0; 
+
+      var inputFeatures = [];
 
       function setup() {
         //initialization of HTML
         document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
 
-
         createCanvas(canvasWidth, canvasHeight);     
         div = document.getElementById("canvasDiv");
         div.appendChild(canvas);    
         player1 = new Objects(10*int(random((canvasWidth-playerWidth)/10)),(canvasHeight - playerWidth - 10),playerWidth,playerWidth);  
-        block1 = new Objects(random(canvasWidth-blockWidth),0,blockWidth,blockHeight); 
+        block1 = new Objects(int(random(canvasWidth-blockWidth)),0,blockWidth,blockHeight); 
         if ((block1.x - 2*blockWidth) > 0)
-          var xCandidate = random(0,(block1.x - 2*blockWidth));
+          var xCandidate = int(random(0,(block1.x - 2*blockWidth)));
         else
-          var xCandidate = random((block1.x + blockWidth),canvasWidth-blockWidth);
+          var xCandidate = int(random((block1.x + blockWidth),canvasWidth-blockWidth));
 
         block2 = new Objects(xCandidate,0,blockWidth,blockHeight);  
       }
+
+
+////////////////////
 
       function draw() {             
         background(232,142,59);    
@@ -45,6 +49,15 @@
         block1.move(0,blockSpeed); 
         block2.display(); 
         block2.move(0,blockSpeed); 
+        
+        previousX = player1.x;
+        
+        //AI is playing randomly
+        randomMove = int(random([-1,1]));
+        player1.move(randomMove*playerSpeed,0);
+
+        scored = 0;
+        crashed = 0;
 
         //Check if there is collision
         isCollide1 = collisionDetection(player1,block1);
@@ -53,25 +66,33 @@
           print("crash ")
           block1.randomlyCreateAgain(1);
           block2.randomlyCreateAgain(2);
+          turn++;
+          crashed = 1;
         }
 
         //Check if scored
         if (block1.y > canvasHeight){
           score++;
+          turn++;
           print("Score:"+score);
           document.getElementById("scoreID").innerHTML =score;
           block1.randomlyCreateAgain(1);
           block2.randomlyCreateAgain(2);
+          scored = 1;
         }
 
-        if (keyIsDown(LEFT_ARROW)){
-          player1.move(-playerSpeed,0);
-        }
-        if (keyIsDown(RIGHT_ARROW)){
-          player1.move(playerSpeed,0);
-        }
 
-      }
+        if (scored==1)
+          append(inputFeatures,[player1.x, previousX - player1.x, block1.x, block1.y, block2.x, block2.y, blockSpeed]); 
+        if (crashed == 1)
+          inputFeatures = [];
+        
+        saveDataForAI();
+
+      } //end of draw
+
+//////////////
+
 
       function Objects(x,y,width,height){
         this.x = x;
@@ -93,12 +114,12 @@
 
         this.randomlyCreateAgain = function(blockNumber){ 
           if(blockNumber==1)
-            this.x = random(canvasWidth-blockWidth);
+            this.x = int(random(canvasWidth-blockWidth));
           else{
             if ((block1.x - 2*blockWidth) > 0)
-              this.x  = random(0,(block1.x - 2*blockWidth));
+              this.x  = int(random(0,(block1.x - 2*blockWidth)));
             else
-              this.x  = random((block1.x + blockWidth),canvasWidth-blockWidth);
+              this.x  = int(random((block1.x + blockWidth),canvasWidth-blockWidth));
           }
           this.y = 0;  
         }        
@@ -112,10 +133,10 @@
         return 0;
       }
 
+
     </script>
 
 
-    
   <body style="background: #006dffab;">
 
     <div id="header" style="padding:20px;text-align: center"> 
@@ -125,12 +146,23 @@
 
     <div id="main" style="text-align: center; justify-content: center; display: flex;">
       <div id="canvasDiv" style="margin-right: 50px; float:left"></div>
-      <div id="buttonArea" style="width: 300px;float:left"> 
+      <div id="buttonArea" style=" float:left"> 
         <font style="font-size: 20px;">Current Block Speed: </font><font id="blockSpeedFont" style="font-size: 20px;">0</font>
         <input type="button" id="increaseSpeed" value="Increase Speed" style=" font-size: 15px;margin: 5px;padding: 5px;"><input type="button" id="decreaseSpeed" value="Decrease Speed" style=" font-size: 15px;margin: 5px;padding: 5px;">
         <br> <br>
+        <input type="button" id="loadModel" value="Load Model" style=" font-size: 25px;margin: 5px;padding: 5px;"><input type="button" id="saveModel" value="Save Model" style=" font-size: 25px;margin: 5px;padding: 5px;"><br>
         <input type="button" id="trainButton" value="Self Train" style=" font-size: 25px;margin: 5px;padding: 5px;"><input type="button" id="testButton" value="Test & Play" style=" font-size: 25px;margin: 5px;padding: 5px;">
+        <br><br><font style="font-size: 20px;">Input Features: </font><br>
+        <font style="font-size: 20px;">Player x position: </font><font id="playerXposition" style="font-size: 20px;">0</font><br>
+        <font style="font-size: 20px;">Player previous x position: </font><font id="playerPreviousXposition" style="font-size: 20px;">0</font><br>
+        <font style="font-size: 20px;">Block1 x position: </font><font id="block1xPosition" style="font-size: 20px;">0</font><br>
+        <font style="font-size: 20px;">Block1 y position: </font><font id="block1yPosition" style="font-size: 20px;">0</font><br>
+        <font style="font-size: 20px;">Block2 x position: </font><font id="block2xPosition" style="font-size: 20px;">0</font><br>
+        <font style="font-size: 20px;">Block2 y position: </font><font id="block2yPosition" style="font-size: 20px;">0</font><br>
+        <font style="font-size: 20px;">Block Speed: </font><font id="blockSpeed" style="font-size: 20px;">0</font>
       </div>
+
+
     </div>
 
   </body>
@@ -149,6 +181,18 @@
         document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
       }
 
+      function saveDataForAI(){
+        //Updates parametes and saves data for AI input 
+          document.getElementById("playerXposition").innerHTML = player1.x;
+          document.getElementById("playerPreviousXposition").innerHTML = previousX;
+          document.getElementById("block1xPosition").innerHTML = block1.x;
+          document.getElementById("block1yPosition").innerHTML = block1.y;
+          document.getElementById("block2xPosition").innerHTML = block2.x;
+          document.getElementById("block2yPosition").innerHTML = block2.y;
+          document.getElementById("blockSpeed").innerHTML = blockSpeed;
+
+
+      }
 
 </script>
 
