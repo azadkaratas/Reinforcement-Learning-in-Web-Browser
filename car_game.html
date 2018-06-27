@@ -7,7 +7,7 @@
   </head>
 
 <script type="text/javascript">
-      var canvasWidth = 450;                        
+      var canvasWidth = 4500;                        
       var canvasHeight = 600;
 
       var playerWidth = 50; 
@@ -21,7 +21,19 @@
       var score = 0, turn = 0; 
 
       var inputFeatures = [];
-
+	  var outputMovements = [];
+	  var training_X = [];//new Array(1).fill(new Array(7)) // creating 2d array with column size of 7 (number of input features)
+	  var training_Y = [];//new Array(1).fill(new Array(3))
+	  var counter = 0;
+	  
+        // initial model definition
+        //Create the model
+        const model = tf.sequential();
+        model.add(tf.layers.dense({units: 128, inputShape: [7]})); // layer 1
+        model.add(tf.layers.dense({units: 128, inputShape: [128], activation: "sigmoid"})); // layer 2
+        model.add(tf.layers.dense({units: 3, inputShape: [128]})); // output layer
+        model.compile({loss: 'meanSquaredError', optimizer: 'adam'}); // compile with params
+ 
       function setup() {
         //initialization of HTML
         document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
@@ -37,6 +49,7 @@
           var xCandidate = int(random((block1.x + blockWidth),canvasWidth-blockWidth));
 
         block2 = new Objects(xCandidate,0,blockWidth,blockHeight);  
+
       }
 
 
@@ -53,12 +66,11 @@
         previousX = player1.x;
         
         //AI is playing randomly
-        randomMove = int(random([-1,1]));
+        randomMove = int(random([1,2,3])) - 2;
         player1.move(randomMove*playerSpeed,0);
 
         scored = 0;
         crashed = 0;
-
         //Check if there is collision
         isCollide1 = collisionDetection(player1,block1);
         isCollide2 = collisionDetection(player1,block2);
@@ -82,12 +94,28 @@
         }
 
 
-        if (scored==1)
-          append(inputFeatures,[player1.x, previousX - player1.x, block1.x, block1.y, block2.x, block2.y, blockSpeed]); 
-        if (crashed == 1)
+        append(inputFeatures,[player1.x, previousX - player1.x, block1.x, block1.y, block2.x, block2.y, blockSpeed]); 
+        append(outputMovements,randomMove); 
+
+        if (scored==1){ 
+			saveDataForAI(inputFeatures,outputMovements);
+			inputFeatures = [];
+      outputMovements = [];
+		} 
+        if (crashed==1){
           inputFeatures = [];
-        
-        saveDataForAI();
+
+      outputMovements = [];
+    }		  
+
+        //Updates parametes and saves data for AI input 
+          document.getElementById("playerXposition").innerHTML = player1.x;
+          document.getElementById("playerPreviousXposition").innerHTML = previousX;
+          document.getElementById("block1xPosition").innerHTML = block1.x;
+          document.getElementById("block1yPosition").innerHTML = block1.y;
+          document.getElementById("block2xPosition").innerHTML = block2.x;
+          document.getElementById("block2yPosition").innerHTML = block2.y;
+          document.getElementById("blockSpeed").innerHTML = blockSpeed;
 
       } //end of draw
 
@@ -132,7 +160,6 @@
 
         return 0;
       }
-
 
     </script>
 
@@ -181,17 +208,26 @@
         document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
       }
 
-      function saveDataForAI(){
-        //Updates parametes and saves data for AI input 
-          document.getElementById("playerXposition").innerHTML = player1.x;
-          document.getElementById("playerPreviousXposition").innerHTML = previousX;
-          document.getElementById("block1xPosition").innerHTML = block1.x;
-          document.getElementById("block1yPosition").innerHTML = block1.y;
-          document.getElementById("block2xPosition").innerHTML = block2.x;
-          document.getElementById("block2yPosition").innerHTML = block2.y;
-          document.getElementById("blockSpeed").innerHTML = blockSpeed;
+      function saveDataForAI(trainDataToAdd,outputDataToAdd){
+    print(training_X)
+		training_X[counter]  = trainDataToAdd;
+    print(training_X)
+    zeros = new Array(3).fill(0);
+    for( var kk=0;kk<121;kk++){
+      zeros[outputDataToAdd[kk]+1] = 1;
+      training_Y[counter,kk] = zeros;
+      zeros = new Array(3).fill(0);
 
-
+    }		
+		counter++;
+		//Train every 10 successful steps
+		if (counter%1 == 0){
+        //print(training_X[0][kk])
+        //print(training_Y[kk])
+        model.fit(tf.transpose(tf.tensor(training_X)), tf.tensor(training_Y), {epochs:2}).then(() => {print("okeydir")});
+        training_X = []//new Array(1).fill(new Array(7)) // creating 2d array with column size of 8 (number of input features)
+        training_Y = [];//new Array(1).fill(new Array(3))
+    }
       }
 
 </script>
