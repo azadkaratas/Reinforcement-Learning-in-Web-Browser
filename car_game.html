@@ -7,7 +7,7 @@
   </head>
 
 <script type="text/javascript">
-      var canvasWidth = 4500;                        
+      var canvasWidth = 1* 450;                        
       var canvasHeight = 600;
 
       var playerWidth = 50; 
@@ -21,22 +21,22 @@
       var score = 0, turn = 0; 
 
       var inputFeatures = [];
-	  var outputMovements = [];
-	  var training_X = [];//new Array(1).fill(new Array(7)) // creating 2d array with column size of 7 (number of input features)
-	  var training_Y = [];//new Array(1).fill(new Array(3))
-	  var counter = 0;
+  	  var outputMovements = [];
+  	  var training_X = [];//new Array(1).fill(new Array(7)) // creating 2d array with column size of 7 (number of input features)
+  	  var training_Y = [];//new Array(1).fill(new Array(3))
+  	  var counter = 0; 
 	  
         // initial model definition
         //Create the model
         const model = tf.sequential();
-        model.add(tf.layers.dense({units: 128, inputShape: [7]})); // layer 1
+        model.add(tf.layers.dense({units: 121 , inputShape: [7]})); // layer 1
         model.add(tf.layers.dense({units: 128, inputShape: [128], activation: "sigmoid"})); // layer 2
         model.add(tf.layers.dense({units: 3, inputShape: [128]})); // output layer
         model.compile({loss: 'meanSquaredError', optimizer: 'adam'}); // compile with params
  
       function setup() {
         //initialization of HTML
-        document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
+        document.getElementById("blockSpeedFont").innerHTML = blockSpeed; 
 
         createCanvas(canvasWidth, canvasHeight);     
         div = document.getElementById("canvasDiv");
@@ -63,11 +63,6 @@
         block2.display(); 
         block2.move(0,blockSpeed); 
         
-        previousX = player1.x;
-        
-        //AI is playing randomly
-        randomMove = int(random([1,2,3])) - 2;
-        player1.move(randomMove*playerSpeed,0);
 
         scored = 0;
         crashed = 0;
@@ -77,15 +72,13 @@
         if (isCollide1 || isCollide2){
           print("crash ")
           block1.randomlyCreateAgain(1);
-          block2.randomlyCreateAgain(2);
-          turn++;
+          block2.randomlyCreateAgain(2); 
           crashed = 1;
         }
 
         //Check if scored
         if (block1.y > canvasHeight){
-          score++;
-          turn++;
+          score++; 
           print("Score:"+score);
           document.getElementById("scoreID").innerHTML =score;
           block1.randomlyCreateAgain(1);
@@ -93,29 +86,22 @@
           scored = 1;
         }
 
+        previousX = player1.x; 
 
-        append(inputFeatures,[player1.x, previousX - player1.x, block1.x, block1.y, block2.x, block2.y, blockSpeed]); 
-        append(outputMovements,randomMove); 
-
-        if (scored==1){ 
-			saveDataForAI(inputFeatures,outputMovements);
-			inputFeatures = [];
-      outputMovements = [];
-		} 
-        if (crashed==1){
-          inputFeatures = [];
-
-      outputMovements = [];
-    }		  
-
+        //AI is playing randomly
+        predicted = model.predict(tf.tensor2d([player1.x, previousX - player1.x, block1.x, block1.y, block2.x, block2.y, blockSpeed],[1,7])).dataSync() ; 
+        //print(predicted)
+        predictedMove = (tf.argMax(tf.tensor(predicted)).dataSync()-1);
+        player1.move(predictedMove*playerSpeed,0);
+ 
         //Updates parametes and saves data for AI input 
-          document.getElementById("playerXposition").innerHTML = player1.x;
-          document.getElementById("playerPreviousXposition").innerHTML = previousX;
-          document.getElementById("block1xPosition").innerHTML = block1.x;
-          document.getElementById("block1yPosition").innerHTML = block1.y;
-          document.getElementById("block2xPosition").innerHTML = block2.x;
-          document.getElementById("block2yPosition").innerHTML = block2.y;
-          document.getElementById("blockSpeed").innerHTML = blockSpeed;
+        document.getElementById("playerXposition").innerHTML = player1.x;
+        document.getElementById("playerPreviousXposition").innerHTML = previousX;
+        document.getElementById("block1xPosition").innerHTML = block1.x;
+        document.getElementById("block1yPosition").innerHTML = block1.y;
+        document.getElementById("block2xPosition").innerHTML = block2.x;
+        document.getElementById("block2yPosition").innerHTML = block2.y;
+        document.getElementById("blockSpeed").innerHTML = blockSpeed; 
 
       } //end of draw
 
@@ -176,9 +162,8 @@
       <div id="buttonArea" style=" float:left"> 
         <font style="font-size: 20px;">Current Block Speed: </font><font id="blockSpeedFont" style="font-size: 20px;">0</font>
         <input type="button" id="increaseSpeed" value="Increase Speed" style=" font-size: 15px;margin: 5px;padding: 5px;"><input type="button" id="decreaseSpeed" value="Decrease Speed" style=" font-size: 15px;margin: 5px;padding: 5px;">
-        <br> <br>
-        <input type="button" id="loadModel" value="Load Model" style=" font-size: 25px;margin: 5px;padding: 5px;"><input type="button" id="saveModel" value="Save Model" style=" font-size: 25px;margin: 5px;padding: 5px;"><br>
-        <input type="button" id="trainButton" value="Self Train" style=" font-size: 25px;margin: 5px;padding: 5px;"><input type="button" id="testButton" value="Test & Play" style=" font-size: 25px;margin: 5px;padding: 5px;">
+        <br> <br> 
+        <input type="button" id="fastTrainButton" value="Train & Play" style=" font-size: 25px;margin: 5px;padding: 5px;"> 
         <br><br><font style="font-size: 20px;">Input Features: </font><br>
         <font style="font-size: 20px;">Player x position: </font><font id="playerXposition" style="font-size: 20px;">0</font><br>
         <font style="font-size: 20px;">Player previous x position: </font><font id="playerPreviousXposition" style="font-size: 20px;">0</font><br>
@@ -186,7 +171,7 @@
         <font style="font-size: 20px;">Block1 y position: </font><font id="block1yPosition" style="font-size: 20px;">0</font><br>
         <font style="font-size: 20px;">Block2 x position: </font><font id="block2xPosition" style="font-size: 20px;">0</font><br>
         <font style="font-size: 20px;">Block2 y position: </font><font id="block2yPosition" style="font-size: 20px;">0</font><br>
-        <font style="font-size: 20px;">Block Speed: </font><font id="blockSpeed" style="font-size: 20px;">0</font>
+        <font style="font-size: 20px;">Block Speed: </font><font id="blockSpeed" style="font-size: 20px;">0</font><br><br> 
       </div>
 
 
@@ -207,28 +192,72 @@
           blockSpeed -= 2; 
         document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
       }
+      document.getElementById("fastTrainButton").onclick = function(){
 
-      function saveDataForAI(trainDataToAdd,outputDataToAdd){
-    print(training_X)
-		training_X[counter]  = trainDataToAdd;
-    print(training_X)
-    zeros = new Array(3).fill(0);
-    for( var kk=0;kk<121;kk++){
-      zeros[outputDataToAdd[kk]+1] = 1;
-      training_Y[counter,kk] = zeros;
-      zeros = new Array(3).fill(0);
+          async function execute() {   
+            print("For started")
+            for (var kqk=0;kqk<10000;kqk++){ 
+              while(1){
+                    block1.move(0,blockSpeed); 
+                    block2.move(0,blockSpeed); 
+                    previousX = player1.x;
+                    
+                    //AI is playing randomly
+                    randomMove = int(random([1,2,3])) - 2;
+                    player1.move(randomMove*playerSpeed,0);
 
-    }		
-		counter++;
-		//Train every 10 successful steps
-		if (counter%1 == 0){
-        //print(training_X[0][kk])
-        //print(training_Y[kk])
-        model.fit(tf.transpose(tf.tensor(training_X)), tf.tensor(training_Y), {epochs:2}).then(() => {print("okeydir")});
-        training_X = []//new Array(1).fill(new Array(7)) // creating 2d array with column size of 8 (number of input features)
-        training_Y = [];//new Array(1).fill(new Array(3))
-    }
+                    scored = 0;
+                    crashed = 0;
+                    //Check if there is collision
+                    isCollide1 = collisionDetection(player1,block1);
+                    isCollide2 = collisionDetection(player1,block2);
+                    if (isCollide1 || isCollide2){
+                      block1.randomlyCreateAgain(1);
+                      block2.randomlyCreateAgain(2); 
+                      crashed = 1;
+                    }
+
+                    //Check if scored
+                    if (block1.y > canvasHeight){ 
+                      block1.randomlyCreateAgain(1);
+                      block2.randomlyCreateAgain(2);
+                      scored = 1;
+                    }
+
+                    if (scored==1){ 
+                      append(inputFeatures,[player1.x, previousX - player1.x, block1.x, block1.y, block2.x, block2.y, blockSpeed]); 
+                      append(outputMovements,randomMove);  
+                      counter++;  
+                      break;
+                    } 
+                    if (crashed==1){ 
+                      break;
+                    }     
+
+                }
+              }
+
+            zeros = new Array(3).fill(0);
+            for( var kk=0;kk<counter;kk++){ 
+              zeros[outputMovements[kk]+1] = 1;
+              training_Y[kk] = zeros; 
+              zeros = new Array(3).fill(0); 
+            } 
+
+ 
+print("Training started. Number of sample to be trained",counter)
+ 
+            await model.fit(tf.tensor2d(inputFeatures,[counter,7]), tf.tensor2d(training_Y,[counter,3]), {epochs:5}); 
+
+            }
+                execute(); 
+            inputFeatures = [];
+            outputMovements = [];
+            training_Y = [];
+                counter = 0;
+                print("Training finished") 
       }
+ 
 
 </script>
 
