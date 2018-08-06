@@ -15,10 +15,5 @@ Outputs:
 - Right
 - Nothing
 
-# Introduction
-
-# Setup
-
-# Demo
-
 # To Do
+Better CNN model will be applied.
