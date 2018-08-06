@@ -33,10 +33,12 @@
       // initial model definition
       //Create the model
       const model = tf.sequential();
-        model.add(tf.layers.dense({units: 121 , inputShape: [7]})); // layer 1
-        model.add(tf.layers.dense({units: 128, inputShape: [128], activation: "sigmoid"})); // layer 2
-        model.add(tf.layers.dense({units: 3, inputShape: [128]})); // output layer
-        model.compile({loss: 'meanSquaredError', optimizer: 'adam'}); // compile with params
+      model.add(tf.layers.dense({units: 121 , inputShape: [7]})); // layer 1  
+      model.add(tf.layers.dense({units: 128, inputShape: [128], activation: "relu"})); // layer 2
+      model.add(tf.layers.dropout({number:0.5}))
+      model.add(tf.layers.dense({units: 256, inputShape: [128], activation: "relu"})); // layer 2
+      model.add(tf.layers.dropout({number:0.5}))
+      model.add(tf.layers.dense({units: 3, inputShape: [256]})); // output layer
       model.compile({loss: 'meanSquaredError', optimizer: 'adam'}); // compile with params
 
 //////////////////// 
@@ -96,8 +98,7 @@
 
         //AI is playing randomly
         predicted = model.predict(tf.tensor2d([player1.x/canvasWidth, (previousX - player1.x)/10, block1.x/canvasWidth, block1.y/canvasHeight, block2.x/canvasWidth, block2.y/canvasHeight, blockSpeed/10],[1,7])).dataSync() ;  
-        predictedMove = (tf.argMax(tf.tensor(predicted)).dataSync()-1);
-       // print(predicted)
+        predictedMove = (tf.argMax(tf.tensor(predicted)).dataSync()-1); 
         player1.move(predictedMove*playerSpeed,0);
  
         //Updates parametes and saves data for AI input 
@@ -179,8 +180,6 @@
         <font style="font-size: 20px;">Block2 y position: </font><font id="block2yPosition" style="font-size: 20px;">0</font><br>
         <font style="font-size: 20px;">Block Speed: </font><font id="blockSpeed" style="font-size: 20px;">0</font><br><br> 
       </div>
-
-
     </div>
 
   </body>
@@ -202,7 +201,7 @@
 
           async function execute() {   
             print("For started")
-            for (var kqk=0;kqk<1000;kqk++){ 
+            for (var kqk=0;kqk<10000;kqk++){ 
               while(1){
                     block1.move(0,blockSpeed); 
                     block2.move(0,blockSpeed); 
@@ -236,12 +235,11 @@
                     if (scored==1){  
                       inputFeatures = [...inputFeatures,...candidateInputs]
                       append(outputMovements,[candidateOutputs])
-                      //outputMovements = [...outputMovements,...candidateOutputs]
                       candidateInputs = []; 
                       candidateOutputs = [];
                       counter++;  
                       break;
-                    } 
+                    }
                     if (crashed==1){ 
                       candidateInputs = []; 
                       candidateOutputs = [];
@@ -257,11 +255,9 @@
               training_Y[kk] = zeros; 
               zeros = new Array(3).fill(0); 
             } 
-
  
-            print("Training started. Number of sample to be trained",counter) 
-            print(inputFeatures)
-            await model.fit(tf.tensor2d(inputFeatures,[counter*121,7]), tf.tensor2d(training_Y,[counter*121,3]), {epochs:5}); 
+            print("Training started. Number of sample to be trained",counter)  
+            await model.fit(tf.tensor2d(inputFeatures,[counter*121,7]), tf.tensor2d(training_Y,[counter*121,3]), {epochs:10}); 
 
             }
                 
