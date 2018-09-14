@@ -25,7 +25,8 @@
 
       var candidateInputs = []; 
       var candidateOutputs = [];
-
+	
+	  var numOfTrial = 500;
   	  var training_X = [];
   	  var training_Y = [];
   	  var counter = 0; 
@@ -34,11 +35,14 @@
       //Create the model
       const model = tf.sequential();
       model.add(tf.layers.dense({units: 121 , inputShape: [7]})); // layer 1  
-      model.add(tf.layers.dense({units: 128, inputShape: [128], activation: "relu"})); // layer 2
+      model.add(tf.layers.dense({units: 128,  activation: "relu"})); // layer 2
       model.add(tf.layers.dropout({number:0.5}))
-      model.add(tf.layers.dense({units: 256, inputShape: [128], activation: "relu"})); // layer 2
+      model.add(tf.layers.dense({units: 512,  activation: "relu"})); // layer 2
+      model.add(tf.layers.dense({units: 128,  activation: "relu"})); // layer 2
       model.add(tf.layers.dropout({number:0.5}))
-      model.add(tf.layers.dense({units: 3, inputShape: [256]})); // output layer
+      model.add(tf.layers.dense({units: 256,  activation: "relu"})); // layer 2
+      model.add(tf.layers.dropout({number:0.5}))
+      model.add(tf.layers.dense({units: 3})); // output layer
       model.compile({loss: 'meanSquaredError', optimizer: 'adam'}); // compile with params
 
 //////////////////// 
@@ -200,8 +204,7 @@
       document.getElementById("fastTrainButton").onclick = function(){
 
           async function execute() {   
-            print("For started")
-            for (var kqk=0;kqk<10000;kqk++){ 
+            for (var indice=0;indice<numOfTrial;indice++){ 
               while(1){
                     block1.move(0,blockSpeed); 
                     block2.move(0,blockSpeed); 
@@ -222,24 +225,23 @@
                       crashed = 1;
                     }
 
-                    //Check if scored
-                    if (block1.y > canvasHeight){ 
-                      block1.randomlyCreateAgain(1);
-                      block2.randomlyCreateAgain(2);
-                      scored = 1;
-                    }
 
                     append(candidateInputs,[player1.x/canvasWidth, (previousX - player1.x)/10, block1.x/canvasWidth, block1.y/canvasHeight, block2.x/canvasWidth, block2.y/canvasHeight, blockSpeed/10]);
                     append(candidateOutputs,[randomMove]);
 
-                    if (scored==1){  
+                    //Check if scored
+                    if (block1.y > canvasHeight){ 
+                      scored = 1;  
                       inputFeatures = [...inputFeatures,...candidateInputs]
                       append(outputMovements,[candidateOutputs])
                       candidateInputs = []; 
                       candidateOutputs = [];
                       counter++;  
+                      block1.randomlyCreateAgain(1);
+                      block2.randomlyCreateAgain(2);
                       break;
                     }
+					
                     if (crashed==1){ 
                       candidateInputs = []; 
                       candidateOutputs = [];
@@ -257,16 +259,15 @@
             } 
  
             print("Training started. Number of sample to be trained",counter)  
-            await model.fit(tf.tensor2d(inputFeatures,[counter*121,7]), tf.tensor2d(training_Y,[counter*121,3]), {epochs:10}); 
-
-            }
-                
-            execute(); 
+            let result = await model.fit(tf.tensor2d(inputFeatures,[counter*121,7]), tf.tensor2d(training_Y,[counter*121,3]), {epochs:2}); 
             inputFeatures = [];
             outputMovements = [];
             training_Y = [];
             counter = 0;
             print("Training finished") 
+            }
+                
+            execute(); 
       }
  
 
