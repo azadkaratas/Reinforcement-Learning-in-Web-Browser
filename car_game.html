@@ -26,7 +26,7 @@
       var candidateInputs = []; 
       var candidateOutputs = [];
 	
-	  var numOfTrial = 500;
+	  var numOfTrial = 300;
   	  var training_X = [];
   	  var training_Y = [];
   	  var counter = 0; 
@@ -34,13 +34,8 @@
       // initial model definition
       //Create the model
       const model = tf.sequential();
-      model.add(tf.layers.dense({units: 121 , inputShape: [7]})); // layer 1  
-      model.add(tf.layers.dense({units: 128,  activation: "relu"})); // layer 2
-      model.add(tf.layers.dropout({number:0.5}))
+      model.add(tf.layers.dense({units: 100 , inputShape: [7]})); // layer 1  
       model.add(tf.layers.dense({units: 512,  activation: "relu"})); // layer 2
-      model.add(tf.layers.dense({units: 128,  activation: "relu"})); // layer 2
-      model.add(tf.layers.dropout({number:0.5}))
-      model.add(tf.layers.dense({units: 256,  activation: "relu"})); // layer 2
       model.add(tf.layers.dropout({number:0.5}))
       model.add(tf.layers.dense({units: 3})); // output layer
       model.compile({loss: 'meanSquaredError', optimizer: 'adam'}); // compile with params
@@ -102,7 +97,7 @@
 
         //AI is playing randomly
         predicted = model.predict(tf.tensor2d([player1.x/canvasWidth, (previousX - player1.x)/10, block1.x/canvasWidth, block1.y/canvasHeight, block2.x/canvasWidth, block2.y/canvasHeight, blockSpeed/10],[1,7])).dataSync() ;  
-        predictedMove = (tf.argMax(tf.tensor(predicted)).dataSync()-1); 
+        predictedMove = (tf.argMax(tf.tensor(predicted)).dataSync()-1);  
         player1.move(predictedMove*playerSpeed,0);
  
         //Updates parametes and saves data for AI input 
@@ -202,9 +197,10 @@
         document.getElementById("blockSpeedFont").innerHTML = blockSpeed;
       }
       document.getElementById("fastTrainButton").onclick = function(){
-
+		var dummyCount = 0, numOfSampleCollected =0
           async function execute() {   
             for (var indice=0;indice<numOfTrial;indice++){ 
+					dummyCount = 0; 
               while(1){
                     block1.move(0,blockSpeed); 
                     block2.move(0,blockSpeed); 
@@ -228,14 +224,16 @@
 
                     append(candidateInputs,[player1.x/canvasWidth, (previousX - player1.x)/10, block1.x/canvasWidth, block1.y/canvasHeight, block2.x/canvasWidth, block2.y/canvasHeight, blockSpeed/10]);
                     append(candidateOutputs,[randomMove]);
+					dummyCount++;
 
                     //Check if scored
                     if (block1.y > canvasHeight){ 
                       scored = 1;  
                       inputFeatures = [...inputFeatures,...candidateInputs]
-                      append(outputMovements,[candidateOutputs])
+					  outputMovements = [...outputMovements, ...candidateOutputs]
                       candidateInputs = []; 
                       candidateOutputs = [];
+					  numOfSampleCollected += dummyCount;
                       counter++;  
                       block1.randomlyCreateAgain(1);
                       block2.randomlyCreateAgain(2);
@@ -250,16 +248,21 @@
 
                 }
               }
-
+			    
             zeros = new Array(3).fill(0);
-            for( var kk=0;kk<counter*121;kk++){ 
-              zeros[outputMovements[kk]+1] = 1;
-              training_Y[kk] = zeros; 
+            for( var kk=0;kk<numOfSampleCollected;kk++){  
+			  if(outputMovements[kk] == -1)
+				zeros[0] = 1
+			  else if(outputMovements[kk] == 0)
+				zeros[1] = 1
+			  else if(outputMovements[kk] == 1)
+				zeros[2] = 1  
+              training_Y = [...training_Y,...[zeros]]
               zeros = new Array(3).fill(0); 
             } 
- 
-            print("Training started. Number of sample to be trained",counter)  
-            let result = await model.fit(tf.tensor2d(inputFeatures,[counter*121,7]), tf.tensor2d(training_Y,[counter*121,3]), {epochs:2}); 
+			
+            print("Training started. Number of sample to be trained is",counter)  
+            let result = await model.fit(tf.tensor2d(inputFeatures,[numOfSampleCollected,7]), tf.tensor2d(training_Y,[numOfSampleCollected,3]), {epochs:3}); 
             inputFeatures = [];
             outputMovements = [];
             training_Y = [];
